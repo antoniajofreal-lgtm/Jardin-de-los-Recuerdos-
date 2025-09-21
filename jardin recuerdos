@@ -12,9 +12,8 @@
     height:100%;
     margin:0;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-    /* fondo de jardín (dominio público en Pixabay) */
     background: url("https://cdn.pixabay.com/photo/2015/06/19/21/24/avenue-815297_1280.jpg") center/cover no-repeat fixed;
-    color: #153e2e; /* texto oscuro para contrastar con paneles claros */
+    color: #153e2e;
   }
 
   /* START SCREEN */
@@ -23,7 +22,7 @@
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     background: rgba(255,255,255,0.86);
     z-index: 900;
-    padding:20px; box-sizing:border-box; text-align:center;
+    padding:20px; text-align:center;
   }
   #startScreen h1 { margin:0 0 8px; font-size:2.1rem; color:#1f6b34; }
   #startScreen p { color:#2b6a36; max-width:640px; }
@@ -45,7 +44,7 @@
     grid-template-columns: repeat(4, minmax(72px, 84px));
     gap:14px;
     justify-content:center;
-    padding-bottom: var(--bottom-space); /* evita que el jardinero tape las casillas */
+    padding-bottom: var(--bottom-space);
     margin-top:6px;
   }
   .cell {
@@ -56,7 +55,7 @@
   }
   .cell.active { transform: scale(1.08); background:#c7f1d6; transition: all .16s; }
 
-  /* Jardinero (anclado, no tapará contenido gracias a padding-bottom) */
+  /* Jardinero */
   #gardenerWrapper {
     position:fixed; right:12px; bottom:12px; display:flex; flex-direction:column; align-items:center;
     gap:10px; z-index:1000; pointer-events:none;
@@ -93,43 +92,43 @@
   </div>
 
   <!-- Juego -->
-  <div id="gameContainer" aria-live="polite">
+  <div id="gameContainer">
     <header class="appbar"><h2>El Jardín de los Recuerdos</h2></header>
     <div class="hud">
       <div id="scoreDisplay">Puntos: 0</div>
       <div id="livesDisplay">Vidas: 🌸🌸🌸</div>
     </div>
-
-    <main id="elements" role="application" aria-label="Rejilla de elementos"></main>
-
+    <main id="elements"></main>
     <div style="display:flex; justify-content:center; gap:8px; margin-top:10px;">
       <button id="restartBtn" class="btn" style="background:#f6a45d">🔄 Reiniciar</button>
       <button id="musicBtnGame" class="btn alt">🔊 Música</button>
     </div>
   </div>
 
-  <!-- Jardinero + globo -->
-  <div id="gardenerWrapper" aria-hidden="true">
+  <!-- Jardinero -->
+  <div id="gardenerWrapper">
     <div id="speechBubble">¡Hola! Presiona "Comenzar Juego".</div>
     <img id="gardenerImg" src="https://cdn.pixabay.com/photo/2014/04/03/11/53/gardener-311325_1280.png" alt="Jardinero">
   </div>
 
-  <!-- Overlays finales -->
+  <!-- Overlays -->
   <div id="winOverlay" class="overlay"><div><h2>🌟 ¡Gracias por jugar! 🌟</h2><p>El jardín te agradece.</p><div style="margin-top:12px;"><button id="winRestart" class="btn">Volver a jugar</button></div></div></div>
   <div id="loseOverlay" class="overlay"><div><h2>💪 ¡Ánimo! 💪</h2><p>Inténtalo otra vez.</p><div style="margin-top:12px;"><button id="loseRestart" class="btn">Reintentar</button></div></div></div>
 
   <!-- Audios -->
   <audio id="bgMusic" loop src="https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Jahzzar/Traveller/Jahzzar_-_05_-_Siesta.mp3"></audio>
   <audio id="sndSeq" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
-  <audio id="sndOk" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+  <audio id="sndOk" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
   <audio id="sndErr" src="https://actions.google.com/sounds/v1/cartoon/metal_thud_and_clang.ogg"></audio>
 
 <script>
-/* ---------- Fallback SVG emoji generator (para jardinero si la imagen falla) ---------- */
+/* ---------- Helpers ---------- */
 function emojiDataURI(emoji, size=160){
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}'><rect width='100%' height='100%' fill='%23ffffff'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='72'>${emoji}</text></svg>`;
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
 }
+const gardenerImg = document.getElementById('gardenerImg');
+gardenerImg.addEventListener('error', ()=> { gardenerImg.src = emojiDataURI('🧑‍🌾', 160); });
 
 /* ---------- DOM ---------- */
 const startScreen = document.getElementById('startScreen');
@@ -142,7 +141,6 @@ const livesDisplay = document.getElementById('livesDisplay');
 const restartBtn = document.getElementById('restartBtn');
 const musicBtnGame = document.getElementById('musicBtnGame');
 const speechBubble = document.getElementById('speechBubble');
-const gardenerImg = document.getElementById('gardenerImg');
 const winOverlay = document.getElementById('winOverlay');
 const loseOverlay = document.getElementById('loseOverlay');
 const winRestart = document.getElementById('winRestart');
@@ -153,44 +151,41 @@ const sndSeq = document.getElementById('sndSeq');
 const sndOk = document.getElementById('sndOk');
 const sndErr = document.getElementById('sndErr');
 
-/* gardener image fallback */
-gardenerImg.addEventListener('error', ()=> { gardenerImg.src = emojiDataURI('🧑‍🌾', 160); });
-
-/* ---------- Juego: estado ---------- */
+/* ---------- Juego ---------- */
 const pools = [
   ['🌸','🌻','🌷','🌼'], // ronda 1
   ['🍎','🍌','🍐','🍇'], // ronda 2
   ['🥕','🌽','🍅','🍆']  // ronda 3
 ];
+const roundNames = [
+  "Ronda 1: Sembrar las frutas 🌱",
+  "Ronda 2: Cosechar las frutas 🍎",
+  "Ronda 3: A juntar la cosecha 🧺"
+];
 
-let currentRound = 1;      // 1..3
-let sequence = [];         // array de índices
+let currentRound = 1;
+let sequence = [];
 let playerIndex = 0;
-let sequenceCount = 0;     // cuántas secuencias ya completadas en la ronda (hasta 2)
+let sequenceCount = 0;
 let score = 0;
 let lives = 3;
 let listening = false;
 let musicOn = false;
 
-/* ---------- UI helpers ---------- */
-function setBubble(text, ms=3000){
+/* ---------- UI ---------- */
+function setBubble(text, ms=3500){
   speechBubble.textContent = text;
   speechBubble.style.display = 'block';
-  // dejamos que la lógica que llama controle los tiempos; aquí mostramos al menos ms en pantalla si la llaman repetidamente
   setTimeout(()=>{ if(speechBubble.textContent === text) speechBubble.style.display = 'none'; }, ms);
 }
 function updateHUD(){
   scoreDisplay.textContent = 'Puntos: ' + score;
   livesDisplay.textContent = 'Vidas: ' + '🌸'.repeat(Math.max(0,lives));
 }
-
-/* ---------- audio safe play ---------- */
 async function safePlay(audioEl){
   if(!audioEl) return;
   try{ audioEl.currentTime = 0; await audioEl.play(); } catch(e){ console.debug('audio blocked', e); }
 }
-
-/* ---------- Música toggle ---------- */
 async function toggleMusic(){
   if(musicOn){
     try{ bgMusic.pause(); } catch(e){}
@@ -207,35 +202,30 @@ async function toggleMusic(){
 musicBtnStart.addEventListener('click', toggleMusic);
 musicBtnGame.addEventListener('click', toggleMusic);
 
-/* ---------- Construir tablero ---------- */
+/* ---------- Tablero ---------- */
 function buildBoard(roundIndex){
   elementsWrap.innerHTML = '';
   const pool = pools[roundIndex - 1];
-  // creamos una celda por cada ítem del pool (índice fijo 0..n-1)
   pool.forEach((symbol, idx)=>{
     const div = document.createElement('div');
     div.className = 'cell';
     div.dataset.idx = String(idx);
     div.textContent = symbol;
-    // pointerdown reduce latencia en móviles; dataset garantiza índice correcto
     div.addEventListener('pointerdown', (ev)=>{ ev.preventDefault(); onCellPressed(idx); });
     elementsWrap.appendChild(div);
   });
 }
 
-/* ---------- Secuencia (índices) ---------- */
+/* ---------- Secuencia ---------- */
 function generateSequence(len){
   const poolLen = pools[currentRound - 1].length;
   const seq = [];
   for(let i=0;i<len;i++) seq.push(Math.floor(Math.random()*poolLen));
   return seq;
 }
-
-/* Mostrar la secuencia (resaltando por índice) */
 async function showSequence(seq){
   listening = false;
   setBubble('Observa la secuencia...', 2500);
-  // espera lectura
   await new Promise(r=>setTimeout(r, 2500));
   const cells = Array.from(elementsWrap.querySelectorAll('.cell'));
   for(let i=0;i<seq.length;i++){
@@ -248,120 +238,98 @@ async function showSequence(seq){
       cell.classList.remove('active');
       await new Promise(r=>setTimeout(r, 150));
     } else {
-      // seguridad
       await new Promise(r=>setTimeout(r, 900));
     }
   }
   listening = true;
-  setBubble('¡Tu turno! Repite la secuencia', 2200);
+  setBubble('¡Tu turno! Repite la secuencia', 2500);
 }
 
-/* ---------- Control de rondas: 2 secuencias por ronda ---------- */
+/* ---------- Rondas ---------- */
 function startRound(){
   if(currentRound > pools.length){
-    // ganó
     gameOverWin();
     return;
   }
   sequenceCount = 0;
-  setBubble('Ronda ' + currentRound + ' — vamos con 2 secuencias', 2000);
-  // construye tablero para esta ronda
+  setBubble(roundNames[currentRound-1], 4000);
   buildBoard(currentRound);
-  // empezamos la primera secuencia con pequeño retraso
-  setTimeout(()=> startNewSequence(), 900);
+  setTimeout(()=> startNewSequence(), 1200);
 }
-
 function startNewSequence(){
-  // la longitud aumenta con la ronda y la secuenciaCount
   const len = 2 + (currentRound - 1) + sequenceCount;
   sequence = generateSequence(len);
   playerIndex = 0;
   showSequence(sequence).catch(e=>console.debug(e));
 }
 
-/* ---------- Interacción del jugador ---------- */
+/* ---------- Jugador ---------- */
 function onCellPressed(idx){
   if(!listening) return;
-  // comparar índices directamente
   if(idx !== sequence[playerIndex]){
-    // incorrecto
     safePlay(sndErr);
     lives = Math.max(0, lives - 1);
     updateHUD();
-    setBubble('¡Ups! Esa no es la correcta.', 2200);
+    setBubble('¡Ups! Esa no es la correcta.', 2500);
     listening = false;
     playerIndex = 0;
     if(lives <= 0){
       setTimeout(()=> gameOverLose(), 700);
     } else {
-      // repetir misma secuencia
       setTimeout(()=> showSequence(sequence), 900);
     }
     return;
   }
-
-  // correcto
   safePlay(sndOk);
-  // animación visual
   const cells = Array.from(elementsWrap.querySelectorAll('.cell'));
   const cell = cells[idx];
   if(cell){ cell.classList.add('active'); setTimeout(()=>cell.classList.remove('active'),220); }
   playerIndex++;
   score += 10; updateHUD();
-
   if(playerIndex >= sequence.length){
-    // completó la secuencia
     score += 20; updateHUD();
     sequenceCount++;
     listening = false;
     if(sequenceCount < 2){
-      // otra secuencia en la misma ronda
-      setBubble('¡Muy bien! Ahora otra secuencia.', 1800);
+      setBubble('¡Muy bien! Ahora otra secuencia.', 2000);
       setTimeout(()=> startNewSequence(), 1000);
     } else {
-      // avanzar de ronda
-      setBubble('¡Ronda completada! 🎉', 1400);
+      setBubble('¡Ronda completada! 🎉', 2000);
       currentRound++;
       sequenceCount = 0;
-      setTimeout(()=> startRound(), 1000);
+      setTimeout(()=> startRound(), 1200);
     }
   }
 }
 
-/* ---------- Game over ---------- */
+/* ---------- Game Over ---------- */
 function gameOverWin(){
-  document.getElementById('gameContainer').style.display = 'none';
+  gameContainer.style.display = 'none';
   winOverlay.style.display = 'flex';
   setBubble('¡Tu jardín florece! 🌸', 3000);
   safePlay(sndOk);
 }
 function gameOverLose(){
-  document.getElementById('gameContainer').style.display = 'none';
+  gameContainer.style.display = 'none';
   loseOverlay.style.display = 'flex';
   setBubble('¡Ánimo! Intenta otra vez.', 3000);
   safePlay(sndErr);
 }
 
-/* ---------- Botones / flujo ---------- */
+/* ---------- Botones ---------- */
 startBtn.addEventListener('pointerdown', (e)=>{ e.preventDefault(); startBtnClicked(); });
 startBtn.addEventListener('click', startBtnClicked);
-
 function startBtnClicked(){
-  // mostrar juego
   startScreen.style.display = 'none';
-  document.getElementById('gameContainer').style.display = 'block';
-  // reset estado
+  gameContainer.style.display = 'block';
   currentRound = 1; score = 0; lives = 3; sequenceCount = 0; playerIndex = 0;
   updateHUD();
-  // NOTA: no forzamos música aquí (puedes tocar el botón de música)
   setTimeout(()=> startRound(), 400);
 }
-
 restartBtn.addEventListener('click', ()=>{
-  // reinicia
   winOverlay.style.display = 'none';
   loseOverlay.style.display = 'none';
-  document.getElementById('gameContainer').style.display = 'block';
+  gameContainer.style.display = 'block';
   currentRound = 1; score = 0; lives = 3; sequenceCount = 0; playerIndex = 0;
   updateHUD();
   setTimeout(()=> startRound(), 300);
@@ -369,15 +337,9 @@ restartBtn.addEventListener('click', ()=>{
 winRestart.addEventListener('click', ()=>{ winOverlay.style.display='none'; startBtnClicked(); });
 loseRestart.addEventListener('click', ()=>{ loseOverlay.style.display='none'; startBtnClicked(); });
 
-/* música */
-musicBtnStart.addEventListener('click', toggleMusic);
-musicBtnGame.addEventListener('click', toggleMusic);
-
-/* inicial */
+/* Inicial */
 updateHUD();
 setBubble('¡Hola! Presiona "Comenzar Juego".', 4000);
-
-console.debug('Versión corregida cargada — prueba en tu dispositivo y dime si el jardinero y el título ahora se ven.');
 </script>
 </body>
 </html>
