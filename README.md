@@ -61,6 +61,12 @@
     color:#173d2a; border-radius:12px; padding:10px; border:1px solid rgba(0,0,0,0.08);
     box-shadow:0 10px 26px rgba(0,0,0,0.12);
     text-align:center;
+    transition: background 0.3s, color 0.3s;
+  }
+  #speechBubble.error {
+    background: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
   }
   #gardenerImg { width:110px; display:block; }
 
@@ -147,7 +153,10 @@ const sndSeq = document.getElementById('sndSeq');
 const sndOk = document.getElementById('sndOk');
 const sndErr = document.getElementById('sndErr');
 
-gardenerImg.addEventListener('error', ()=> { gardenerImg.src = '🧑‍🌾'; });
+// Ajustar volumen del error más fuerte
+sndErr.volume = 1.0;
+
+gardenerImg.addEventListener('error', ()=> { gardenerImg.style.display="none"; speechBubble.textContent="🧑‍🌾"; });
 
 const rounds = [
   { name: "Sembrar las frutas 🌱", pool:['🌸','🌻','🌷','🌼'], cells:4 },
@@ -161,6 +170,7 @@ let correctMoves=0, errors=0;
 function setBubble(text, ms=3000){
   speechBubble.textContent=text;
   speechBubble.style.display='block';
+  speechBubble.classList.remove("error");
   setTimeout(()=>{ if(speechBubble.textContent===text) speechBubble.style.display='none'; },ms);
 }
 function updateHUD(){
@@ -216,18 +226,16 @@ function startNewSequence(){
 function onCellPressed(idx){
   if(!listening) return;
   if(idx!==sequence[playerIndex]){
-    safePlay(sndErr); lives=Math.max(0,lives-1); errors++; updateHUD();
-    setBubble('¡Ups! Esa no es la correcta.',2200); listening=false; playerIndex=0;
+    safePlay(sndErr);
+    lives=Math.max(0,lives-1); errors++; updateHUD();
+    speechBubble.textContent='¡Ups! Esa no es la correcta.';
+    speechBubble.classList.add("error");
+    listening=false; playerIndex=0;
     if(lives<=0){ setTimeout(()=>gameOverLose(),700); }
     else { setTimeout(()=>showSequence(sequence),900); }
     return;
   }
-
-  // 🔊 FIX: ahora clonamos el sonido de OK para que siempre suene
-  const okClone = sndOk.cloneNode();
-  safePlay(okClone);
-
-  correctMoves++;
+  safePlay(sndOk); correctMoves++;
   const cell=[...elementsWrap.querySelectorAll('.cell')][idx];
   if(cell){ cell.classList.add('active'); setTimeout(()=>cell.classList.remove('active'),220); }
   playerIndex++; score+=10; updateHUD();
