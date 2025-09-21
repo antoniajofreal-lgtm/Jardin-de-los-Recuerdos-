@@ -121,7 +121,6 @@
 
 <audio id="bgMusic" loop src="https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Jahzzar/Traveller/Jahzzar_-_05_-_Siesta.mp3"></audio>
 <audio id="sndSeq" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
-<audio id="sndOk"  src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="sndErr" src="https://actions.google.com/sounds/v1/cartoon/metal_thud_and_clang.ogg"></audio>
 
 <script>
@@ -145,7 +144,6 @@ const loseStats = document.getElementById('loseStats');
 
 const bgMusic = document.getElementById('bgMusic');
 const sndSeq = document.getElementById('sndSeq');
-const sndOk = document.getElementById('sndOk');
 const sndErr = document.getElementById('sndErr');
 
 gardenerImg.addEventListener('error', ()=> { gardenerImg.src = '🧑‍🌾'; });
@@ -224,7 +222,7 @@ function onCellPressed(idx){
     else { setTimeout(()=>showSequence(sequence),900); }
     return;
   }
-  safePlay(sndSeq); // 🔔 ahora usa el mismo sonido que mostrar secuencia
+  safePlay(sndSeq); // 🔔 usa siempre sndSeq
   correctMoves++;
   const cell=[...elementsWrap.querySelectorAll('.cell')][idx];
   if(cell){ cell.classList.add('active'); setTimeout(()=>cell.classList.remove('active'),220); }
