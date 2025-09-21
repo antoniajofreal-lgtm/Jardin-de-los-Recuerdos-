@@ -57,12 +57,17 @@
     gap:10px; z-index:1000; pointer-events:none;
   }
   #speechBubble {
-    min-width:180px; max-width:300px; font-size:18px; background: rgba(255,255,255,0.98);
-    color:#173d2a; border-radius:12px; padding:14px; border:2px solid rgba(0,0,0,0.1);
+    min-width:200px; max-width:320px; font-size:20px; background: rgba(255,255,255,0.98);
+    color:#173d2a; border-radius:12px; padding:16px; border:2px solid rgba(0,0,0,0.1);
     box-shadow:0 10px 26px rgba(0,0,0,0.12);
     text-align:center;
   }
-  #speechBubble.error { background:#ffdddd; color:#a60000; border-color:#a60000; }
+  #speechBubble.error { 
+    background:#ff4d4d; 
+    color:#fff; 
+    border-color:#b30000; 
+    font-weight:bold; 
+  }
   #gardenerImg { width:110px; display:block; }
 
   .overlay { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:1200; background: rgba(255,255,255,0.95); text-align:center; }
@@ -70,7 +75,7 @@
 
   @media(max-width:520px){
     .cell{ width:72px; height:72px; font-size:34px; }
-    #speechBubble{ font-size:16px; max-width:230px; }
+    #speechBubble{ font-size:16px; max-width:240px; }
     :root { --bottom-space: 170px; }
   }
 </style>
@@ -124,42 +129,42 @@
 <audio id="sndErr" src="https://actions.google.com/sounds/v1/cartoon/metal_thud_and_clang.ogg"></audio>
 
 <script>
-const startScreen = document.getElementById('startScreen');
-const startBtn = document.getElementById('startBtn');
-const musicBtnStart = document.getElementById('musicBtnStart');
-const gameContainer = document.getElementById('gameContainer');
-const elementsWrap = document.getElementById('elements');
-const scoreDisplay = document.getElementById('scoreDisplay');
-const livesDisplay = document.getElementById('livesDisplay');
-const restartBtn = document.getElementById('restartBtn');
-const musicBtnGame = document.getElementById('musicBtnGame');
-const speechBubble = document.getElementById('speechBubble');
-const gardenerImg = document.getElementById('gardenerImg');
-const winOverlay = document.getElementById('winOverlay');
-const loseOverlay = document.getElementById('loseOverlay');
-const winRestart = document.getElementById('winRestart');
-const loseRestart = document.getElementById('loseRestart');
-const winStats = document.getElementById('winStats');
-const loseStats = document.getElementById('loseStats');
+const startScreen=document.getElementById('startScreen');
+const startBtn=document.getElementById('startBtn');
+const musicBtnStart=document.getElementById('musicBtnStart');
+const gameContainer=document.getElementById('gameContainer');
+const elementsWrap=document.getElementById('elements');
+const scoreDisplay=document.getElementById('scoreDisplay');
+const livesDisplay=document.getElementById('livesDisplay');
+const restartBtn=document.getElementById('restartBtn');
+const musicBtnGame=document.getElementById('musicBtnGame');
+const speechBubble=document.getElementById('speechBubble');
+const gardenerImg=document.getElementById('gardenerImg');
+const winOverlay=document.getElementById('winOverlay');
+const loseOverlay=document.getElementById('loseOverlay');
+const winRestart=document.getElementById('winRestart');
+const loseRestart=document.getElementById('loseRestart');
+const winStats=document.getElementById('winStats');
+const loseStats=document.getElementById('loseStats');
 
-const bgMusic = document.getElementById('bgMusic');
-const sndSeq = document.getElementById('sndSeq');
-const sndErr = document.getElementById('sndErr');
+const bgMusic=document.getElementById('bgMusic');
+const sndSeq=document.getElementById('sndSeq');
+const sndErr=document.getElementById('sndErr');
 
-gardenerImg.addEventListener('error', ()=> { gardenerImg.src = '🧑‍🌾'; });
+gardenerImg.addEventListener('error',()=>{ gardenerImg.src='🧑‍🌾'; });
 
-const rounds = [
-  { name: "Sembrar las frutas 🌱", pool:['🌸','🌻','🌷','🌼'], cells:4 },
-  { name: "Cosechar las frutas 🍎", pool:['🍎','🍌','🍐','🍇','🍓','🍊'], cells:6 },
-  { name: "A juntar la cosecha 🧺", pool:['🥕','🌽','🍅','🍆','🥒','🥔','🫑','🧅'], cells:8 }
+const rounds=[
+  { name:"Sembrar las frutas 🌱", pool:['🌸','🌻','🌷','🌼'], cells:4 },
+  { name:"Cosechar las frutas 🍎", pool:['🍎','🍌','🍐','🍇','🍓','🍊'], cells:6 },
+  { name:"A juntar la cosecha 🧺", pool:['🥕','🌽','🍅','🍆','🥒','🥔','🥦','🧅'], cells:8 }
 ];
 
-let currentRound=1, sequence=[], playerIndex=0, sequenceCount=0, score=0, lives=3, listening=false, musicOn=false;
-let correctMoves=0, errors=0;
+let currentRound=1,sequence=[],playerIndex=0,sequenceCount=0,score=0,lives=3,listening=false,musicOn=false;
+let correctMoves=0,errors=0;
 
-function setBubble(text, ms=3000, isError=false){
+function setBubble(text,ms=3000,isError=false){
   speechBubble.textContent=text;
-  speechBubble.classList.toggle('error', isError);
+  speechBubble.classList.toggle('error',isError);
   speechBubble.style.display='block';
   setTimeout(()=>{ if(speechBubble.textContent===text) speechBubble.style.display='none'; },ms);
 }
@@ -175,12 +180,12 @@ async function toggleMusic(){
   musicBtnStart.textContent=musicOn?'🔇 Música':'🔊 Música';
   musicBtnGame.textContent=musicOn?'🔇 Música':'🔊 Música';
 }
-musicBtnStart.addEventListener('click', toggleMusic);
-musicBtnGame.addEventListener('click', toggleMusic);
+musicBtnStart.addEventListener('click',toggleMusic);
+musicBtnGame.addEventListener('click',toggleMusic);
 
 function buildBoard(roundIndex){
   elementsWrap.innerHTML='';
-  elementsWrap.style.gridTemplateColumns=`repeat(${rounds[roundIndex-1].cells/2}, minmax(72px, 84px))`;
+  elementsWrap.style.gridTemplateColumns=`repeat(${rounds[roundIndex-1].cells/2}, minmax(72px,84px))`;
   const pool=rounds[roundIndex-1].pool;
   for(let i=0;i<rounds[roundIndex-1].cells;i++){
     const div=document.createElement('div');
@@ -222,7 +227,7 @@ function onCellPressed(idx){
     else { setTimeout(()=>showSequence(sequence),900); }
     return;
   }
-  safePlay(sndSeq); // 🔔 usa siempre sndSeq
+  safePlay(sndSeq);
   correctMoves++;
   const cell=[...elementsWrap.querySelectorAll('.cell')][idx];
   if(cell){ cell.classList.add('active'); setTimeout(()=>cell.classList.remove('active'),220); }
@@ -246,10 +251,10 @@ function startBtnClicked(){
   currentRound=1; score=0; lives=3; sequenceCount=0; playerIndex=0; correctMoves=0; errors=0;
   updateHUD(); setTimeout(()=>startRound(),400);
 }
-startBtn.addEventListener('click', startBtnClicked);
-restartBtn.addEventListener('click', ()=>{ winOverlay.style.display='none'; loseOverlay.style.display='none'; startBtnClicked(); });
-winRestart.addEventListener('click', ()=>{ winOverlay.style.display='none'; startBtnClicked(); });
-loseRestart.addEventListener('click', ()=>{ loseOverlay.style.display='none'; startBtnClicked(); });
+startBtn.addEventListener('click',startBtnClicked);
+restartBtn.addEventListener('click',()=>{ winOverlay.style.display='none'; loseOverlay.style.display='none'; startBtnClicked(); });
+winRestart.addEventListener('click',()=>{ winOverlay.style.display='none'; startBtnClicked(); });
+loseRestart.addEventListener('click',()=>{ loseOverlay.style.display='none'; startBtnClicked(); });
 updateHUD(); setBubble('¡Hola! Presiona "Comenzar Juego".',3000);
 </script>
 </body>
