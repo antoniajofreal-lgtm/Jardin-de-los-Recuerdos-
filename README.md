@@ -1,199 +1,245 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>El Jardín de los Recuerdos</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>El Jardín de los Recuerdos 🌳</title>
 <style>
-  body {
-    margin: 0;
-    font-family: "Comic Sans MS", cursive;
-    background: url('https://cdn.pixabay.com/photo/2015/07/09/22/45/field-838684_1280.jpg') no-repeat center center fixed;
-    background-size: cover;
-    text-align: center;
-    color: #2c2c2c;
+  :root { --bottom-space: 200px; }
+  html,body{ height:100%; margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+    background: url("https://cdn.pixabay.com/photo/2015/06/19/21/24/avenue-815297_1280.jpg") center/cover no-repeat fixed; color: #153e2e; }
+  /* Pantalla inicio */
+  #startScreen{ position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background: rgba(255,255,255,0.86); z-index:900; padding:20px; box-sizing:border-box; text-align:center; }
+  #startScreen h1{ margin:0 0 8px; font-size:2.1rem; color:#1f6b34; }
+  #startScreen p{ color:#2b6a36; max-width:640px; }
+  .btn{ padding:10px 18px; border-radius:10px; border:0; cursor:pointer; background:#57b86a; color:white; font-size:1rem; margin:8px; }
+  .btn.alt{ background:#6ca3f5; }
+  /* Juego */
+  #gameContainer{ display:none; padding:18px; min-height:100vh; box-sizing:border-box; }
+  header.appbar{ display:flex; justify-content:center; margin-bottom:8px; }
+  header.appbar h2{ margin:0; color:#143e29; background: rgba(255,255,255,0.7); padding:6px 14px; border-radius:8px; }
+  .hud{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px; color:#1e6b2a; }
+  #elements{ display:grid; gap:14px; justify-content:center; padding-bottom: var(--bottom-space); margin-top:6px; }
+  .cell{ width:84px; height:84px; border-radius:12px; background: rgba(255,255,255,0.95);
+    display:flex; align-items:center; justify-content:center; font-size:40px;
+    box-shadow:0 6px 14px rgba(0,0,0,0.12); touch-action: manipulation; user-select:none; }
+  .cell.active{ transform: scale(1.08); background:#c7f1d6; transition: all .16s; }
+  /* Jardinero */
+  #gardenerWrapper{ position:fixed; right:12px; bottom:12px; display:flex; flex-direction:column; align-items:center;
+    gap:10px; z-index:1000; pointer-events:none; }
+  #speechBubble{ min-width:160px; max-width:260px; font-size:16px; background: rgba(255,255,255,0.98); color:#173d2a;
+    border-radius:12px; padding:10px; border:1px solid rgba(0,0,0,0.08); box-shadow:0 10px 26px rgba(0,0,0,0.12); text-align:center; }
+  #gardenerImg{ width:110px; display:block; }
+  /* Overlays */
+  .overlay{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:1200;
+    background: rgba(255,255,255,0.95); text-align:center; }
+  .overlay h2{ color:#1f6b34; margin:0 0 8px; }
+  /* Animación pérdida de vida */
+  .lifeLost { animation: shake 0.4s; color:#aaa !important; }
+  @keyframes shake {
+    0%{ transform:translate(0,0) rotate(0); }
+    20%{ transform:translate(-3px,0) rotate(-5deg); }
+    40%{ transform:translate(3px,0) rotate(5deg); }
+    60%{ transform:translate(-3px,0) rotate(-5deg); }
+    80%{ transform:translate(3px,0) rotate(5deg); }
+    100%{ transform:translate(0,0) rotate(0); }
   }
-  h1 { margin-top: 20px; color:#fff; text-shadow:2px 2px 4px #000; }
-  #gameArea { margin:20px auto; max-width:800px; }
-  #grid {
-    display:grid;
-    justify-content:center;
-    gap:12px;
-    margin:20px auto;
-  }
-  .cell {
-    width:80px; height:80px;
-    display:flex; align-items:center; justify-content:center;
-    font-size:40px; cursor:pointer;
-    background:#fff8; border-radius:12px;
-    transition:transform 0.2s, background 0.2s;
-  }
-  .cell.active { background:#ffe066; transform:scale(1.1); }
-  #gardener {
-    position:relative; display:inline-block; margin-top:10px;
-  }
-  #gardener img { width:120px; }
-  #speech {
-    position:absolute; top:-50px; left:130px;
-    background:#fff; padding:10px 15px;
-    border-radius:12px; border:2px solid #333;
-    max-width:250px; text-align:left;
-  }
-  #lives, #score { font-size:20px; margin:10px; color:#fff; text-shadow:1px 1px 2px #000; }
-  #finalScreen {
-    position:fixed;top:0;left:0;right:0;bottom:0;
-    background:rgba(0,0,0,0.85);color:#fff;display:none;
-    flex-direction:column;align-items:center;justify-content:center;
-    font-size:22px;padding:20px;
-  }
-  button {
-    font-size:18px;padding:10px 20px;margin-top:20px;
-    border:none;border-radius:8px;cursor:pointer;
-    background:#4CAF50;color:white;
+  @media(max-width:520px){
+    .cell{ width:72px; height:72px; font-size:34px; }
+    #speechBubble{ font-size:15px; max-width:200px; }
+    :root { --bottom-space: 170px; }
   }
 </style>
 </head>
 <body>
-  <h1>🌳 El Jardín de los Recuerdos 🌳</h1>
-  <div id="gameArea">
-    <div id="gardener">
-      <img src="https://cdn.pixabay.com/photo/2021/02/18/19/35/gardener-6027144_1280.png" alt="Jardinero">
-      <div id="speech">¡Bienvenido al jardín!</div>
-    </div>
-    <div id="lives"></div>
-    <div id="score">Puntos: 0</div>
-    <div id="grid"></div>
-    <button onclick="startGame()">Iniciar Juego</button>
-  </div>
 
-  <div id="finalScreen">
-    <h2 id="finalTitle"></h2>
-    <p id="finalStats"></p>
-    <button onclick="startGame()">Jugar de nuevo</button>
+<!-- Inicio -->
+<div id="startScreen">
+  <h1>🌳 El Jardín de los Recuerdos</h1>
+  <p>Ayuda al jardinero a cuidar su jardín recordando secuencias. 2 secuencias por ronda — sin penalizaciones, 3 vidas.</p>
+  <div style="margin-top:14px;">
+    <button id="startBtn" class="btn">🌸 Comenzar Juego</button>
+    <button id="musicBtnStart" class="btn alt">🔊 Música</button>
   </div>
+</div>
 
-  <!-- sonidos -->
-  <audio id="sndClick" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
-  <audio id="sndErr" src="https://actions.google.com/sounds/v1/cartoon/metal_thud_and_clang.ogg"></audio>
-  <audio id="bgMusic" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_7b9d9ab47a.mp3?filename=happy-day-112193.mp3" loop></audio>
+<!-- Juego -->
+<div id="gameContainer">
+  <header class="appbar"><h2>El Jardín de los Recuerdos</h2></header>
+  <div class="hud">
+    <div id="scoreDisplay">Puntos: 0</div>
+    <div id="livesDisplay">Vidas: 🌸🌸🌸</div>
+  </div>
+  <main id="elements"></main>
+  <div style="display:flex; justify-content:center; gap:8px; margin-top:10px;">
+    <button id="restartBtn" class="btn" style="background:#f6a45d">🔄 Reiniciar</button>
+    <button id="musicBtnGame" class="btn alt">🔊 Música</button>
+  </div>
+</div>
+
+<!-- Jardinero -->
+<div id="gardenerWrapper">
+  <div id="speechBubble">¡Hola! Presiona "Comenzar Juego".</div>
+  <img id="gardenerImg" src="https://cdn.pixabay.com/photo/2014/04/03/11/53/gardener-311325_1280.png" alt="Jardinero">
+</div>
+
+<!-- Final -->
+<div id="winOverlay" class="overlay">
+  <div>
+    <h2>🌟 ¡Gracias por jugar! 🌟</h2>
+    <p id="winStats"></p>
+    <div style="margin-top:12px;"><button id="winRestart" class="btn">Volver a jugar</button></div>
+  </div>
+</div>
+<div id="loseOverlay" class="overlay">
+  <div>
+    <h2>💪 ¡Ánimo! 💪</h2>
+    <p id="loseStats"></p>
+    <div style="margin-top:12px;"><button id="loseRestart" class="btn">Reintentar</button></div>
+  </div>
+</div>
+
+<!-- Sonidos -->
+<audio id="bgMusic" loop src="https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Jahzzar/Traveller/Jahzzar_-_05_-_Siesta.mp3"></audio>
+<audio id="sndSeq" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+<audio id="sndOk"  src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+<audio id="sndErr" src="https://actions.google.com/sounds/v1/cartoon/metal_thud_and_clang.ogg"></audio>
 
 <script>
-const grid=document.getElementById('grid');
-const speech=document.getElementById('speech');
-const livesDiv=document.getElementById('lives');
-const scoreDiv=document.getElementById('score');
-const finalScreen=document.getElementById('finalScreen');
-const finalTitle=document.getElementById('finalTitle');
-const finalStats=document.getElementById('finalStats');
-const sndClick=document.getElementById('sndClick');
-const sndErr=document.getElementById('sndErr');
+const startScreen=document.getElementById('startScreen');
+const startBtn=document.getElementById('startBtn');
+const musicBtnStart=document.getElementById('musicBtnStart');
+const gameContainer=document.getElementById('gameContainer');
+const elementsWrap=document.getElementById('elements');
+const scoreDisplay=document.getElementById('scoreDisplay');
+const livesDisplay=document.getElementById('livesDisplay');
+const restartBtn=document.getElementById('restartBtn');
+const musicBtnGame=document.getElementById('musicBtnGame');
+const speechBubble=document.getElementById('speechBubble');
+const gardenerImg=document.getElementById('gardenerImg');
+const winOverlay=document.getElementById('winOverlay');
+const loseOverlay=document.getElementById('loseOverlay');
+const winRestart=document.getElementById('winRestart');
+const loseRestart=document.getElementById('loseRestart');
+const winStats=document.getElementById('winStats');
+const loseStats=document.getElementById('loseStats');
+
 const bgMusic=document.getElementById('bgMusic');
-sndClick.volume=0.6; sndErr.volume=1.0;
+const sndSeq=document.getElementById('sndSeq');
+const sndOk=document.getElementById('sndOk');
+const sndErr=document.getElementById('sndErr');
 
-let round=1,sequence=[],playerIndex=0,listening=false,lives=3,score=0,errors=0,corrects=0;
-const fruits=["🍎","🍐","🍊","🍇","🍓","🍒","🍉","🥕"];
-const roundNames=["Sembrar las frutas","Cosechar las frutas","A juntar la cosecha"];
-const roundCells=[4,6,8];
+const rounds=[
+  { name:"Sembrar las frutas 🌱", pool:['🌸','🌻','🌷','🌼'], cells:4 },
+  { name:"Cosechar las frutas 🍎", pool:['🍎','🍌','🍐','🍇','🍓','🍊'], cells:6 },
+  { name:"A juntar la cosecha 🧺", pool:['🥕','🌽','🍅','🍆','🥒','🥔','🫑','🧅'], cells:8 }
+];
 
-function safePlay(snd){
-  snd.pause();
-  snd.currentTime=0;
-  snd.play().catch(()=>{});
+let currentRound=1, sequence=[], playerIndex=0, sequenceCount=0, score=0, lives=3, listening=false, musicOn=false;
+let correctMoves=0, errors=0;
+
+function setBubble(text, ms=3000){
+  speechBubble.textContent=text;
+  speechBubble.style.display='block';
+  setTimeout(()=>{ if(speechBubble.textContent===text) speechBubble.style.display='none'; },ms);
 }
-
-function showSpeech(msg,time=2500){
-  speech.innerText=msg;
-  setTimeout(()=>{ speech.innerText=""; }, time);
-}
-
-function updateLives(){
-  livesDiv.innerHTML="Vidas: "+ "🌸".repeat(lives);
-}
-function updateScore(){
-  scoreDiv.innerText="Puntos: "+score;
-}
-
-function startGame(){
-  finalScreen.style.display="none";
-  round=1;score=0;lives=3;errors=0;corrects=0;
-  updateLives();updateScore();
-  bgMusic.play().catch(()=>{});
-  nextRound();
-}
-
-function nextRound(){
-  if(round>3){ endGame(true); return; }
-  grid.innerHTML="";
-  let n=roundCells[round-1];
-  grid.style.gridTemplateColumns=`repeat(${Math.ceil(Math.sqrt(n))},80px)`;
-  for(let i=0;i<n;i++){
-    const cell=document.createElement('div');
-    cell.className='cell';
-    cell.innerText=fruits[i];
-    cell.dataset.index=i;
-    cell.onclick=()=>onCellPressed(i);
-    grid.appendChild(cell);
+function updateHUD(){
+  let livesStr="";
+  for(let i=0;i<3;i++){
+    if(i<lives) livesStr+="🌸";
+    else livesStr+="<span class='lifeLost'>🌸</span>";
   }
-  showSpeech("Ronda "+round+": "+roundNames[round-1],4000);
-  setTimeout(startSequence,4200);
+  livesDisplay.innerHTML="Vidas: "+livesStr;
+  scoreDisplay.textContent='Puntos: '+score;
+}
+async function safePlay(audioEl){ try{ audioEl.currentTime=0; await audioEl.play(); }catch{} }
+async function toggleMusic(){
+  if(musicOn){ bgMusic.pause(); musicOn=false; }
+  else{ await safePlay(bgMusic); musicOn=!bgMusic.paused; }
+  musicBtnStart.textContent=musicOn?'🔇 Música':'🔊 Música';
+  musicBtnGame.textContent=musicOn?'🔇 Música':'🔊 Música';
 }
 
-function startSequence(){
-  sequence=[];
-  let n=roundCells[round-1];
-  for(let s=0;s<2;s++){ // 2 secuencias por ronda
-    for(let i=0;i<round+1;i++){ sequence.push(Math.floor(Math.random()*n)); }
+musicBtnStart.addEventListener('click', toggleMusic);
+musicBtnGame.addEventListener('click', toggleMusic);
+
+function buildBoard(roundIndex){
+  elementsWrap.innerHTML='';
+  elementsWrap.style.gridTemplateColumns=`repeat(${rounds[roundIndex-1].cells/2}, minmax(72px,84px))`;
+  const pool=rounds[roundIndex-1].pool;
+  for(let i=0;i<rounds[roundIndex-1].cells;i++){
+    const div=document.createElement('div');
+    div.className='cell'; div.dataset.idx=i; div.textContent=pool[i];
+    div.addEventListener('pointerdown',(ev)=>{ev.preventDefault(); onCellPressed(i);});
+    elementsWrap.appendChild(div);
   }
-  playerIndex=0;
-  playSequence(0);
 }
-
-function playSequence(i){
-  if(i>=sequence.length){ listening=true; return; }
-  let idx=sequence[i];
-  let cell=grid.querySelector(`[data-index='${idx}']`);
-  setTimeout(()=>{
-    cell.classList.add('active');
-    safePlay(sndClick);
-    setTimeout(()=>{ cell.classList.remove('active'); playSequence(i+1); },600);
-  },600);
+function generateSequence(len){
+  const poolLen=rounds[currentRound-1].cells;
+  return Array.from({length:len},()=>Math.floor(Math.random()*poolLen));
 }
-
+async function showSequence(seq){
+  listening=false; setBubble('Observa la secuencia...',2500);
+  await new Promise(r=>setTimeout(r,2500));
+  const cells=[...elementsWrap.querySelectorAll('.cell')];
+  for(let idx of seq){
+    const cell=cells[idx]; if(cell){ cell.classList.add('active'); safePlay(sndSeq);
+    await new Promise(r=>setTimeout(r,700)); cell.classList.remove('active'); await new Promise(r=>setTimeout(r,150)); }
+  }
+  listening=true; setBubble('¡Tu turno! Repite la secuencia',2200);
+}
+function startRound(){
+  if(currentRound>rounds.length){ gameOverWin(); return; }
+  sequenceCount=0; setBubble('Ronda '+currentRound+': '+rounds[currentRound-1].name,4000);
+  buildBoard(currentRound); setTimeout(()=> startNewSequence(),900);
+}
+function startNewSequence(){
+  const len=2+(currentRound-1)+sequenceCount;
+  sequence=generateSequence(len); playerIndex=0;
+  showSequence(sequence);
+}
+function loseLife(){
+  lives=Math.max(0,lives-1);
+  updateHUD();
+  setBubble(`Has perdido una vida 😢. Te quedan ${lives} 🌸`,3500);
+  if(lives<=0){ setTimeout(()=>gameOverLose(),700); }
+  else { setTimeout(()=>showSequence(sequence),1000); }
+}
 function onCellPressed(idx){
   if(!listening) return;
   if(idx!==sequence[playerIndex]){
-    safePlay(sndErr);
-    errors++;
-    listening=false;playerIndex=0;
-    loseLife();
-    return;
+    safePlay(sndErr); errors++; listening=false; playerIndex=0; loseLife(); return;
   }
-  safePlay(sndClick);
-  playerIndex++;
-  if(playerIndex===sequence.length){
-    corrects++;
-    score+=round*10;
-    updateScore();
-    listening=false;round++;
-    setTimeout(nextRound,2000);
+  safePlay(sndOk); correctMoves++;
+  const cell=[...elementsWrap.querySelectorAll('.cell')][idx];
+  if(cell){ cell.classList.add('active'); setTimeout(()=>cell.classList.remove('active'),220); }
+  playerIndex++; score+=10; updateHUD();
+  if(playerIndex>=sequence.length){
+    score+=20; updateHUD(); sequenceCount++; listening=false;
+    if(sequenceCount<2){ setBubble('¡Muy bien! Otra secuencia.',1800); setTimeout(()=>startNewSequence(),1000);}
+    else { setBubble('¡Ronda completada! 🎉',2000); currentRound++; setTimeout(()=>startRound(),1500); }
   }
 }
-
-function loseLife(){
-  lives--;
-  updateLives();
-  showSpeech("¡Perdiste una vida! 🌸",2500);
-  if(lives<=0){ endGame(false); }
-  else { setTimeout(()=>{ playSequence(0); listening=true; },2000); }
+function gameOverWin(){
+  gameContainer.style.display='none'; winOverlay.style.display='flex';
+  winStats.textContent=`Puntos: ${score} | Rondas completadas: ${rounds.length} | Secuencias correctas: ${correctMoves} | Errores: ${errors}`;
 }
-
-function endGame(win){
-  grid.innerHTML="";
-  finalScreen.style.display="flex";
-  finalTitle.innerText=win?"¡Felicidades, terminaste el jardín!":"Juego terminado";
-  finalStats.innerHTML=`Puntos: ${score}<br>Rondas completadas: ${round-1}<br>Aciertos: ${corrects}<br>Errores: ${errors}`;
-  bgMusic.pause();
+function gameOverLose(){
+  gameContainer.style.display='none'; loseOverlay.style.display='flex';
+  loseStats.textContent=`Puntos: ${score} | Rondas alcanzadas: ${currentRound-1} | Secuencias correctas: ${correctMoves} | Errores: ${errors}`;
 }
+function startBtnClicked(){
+  startScreen.style.display='none'; gameContainer.style.display='block';
+  currentRound=1; score=0; lives=3; sequenceCount=0; playerIndex=0; correctMoves=0; errors=0;
+  updateHUD(); setTimeout(()=>startRound(),400);
+}
+startBtn.addEventListener('click', startBtnClicked);
+restartBtn.addEventListener('click', ()=>{ winOverlay.style.display='none'; loseOverlay.style.display='none'; startBtnClicked(); });
+winRestart.addEventListener('click', ()=>{ winOverlay.style.display='none'; startBtnClicked(); });
+loseRestart.addEventListener('click', ()=>{ loseOverlay.style.display='none'; startBtnClicked(); });
+
+updateHUD(); setBubble('¡Hola! Presiona "Comenzar Juego".',4000);
 </script>
 </body>
 </html>
