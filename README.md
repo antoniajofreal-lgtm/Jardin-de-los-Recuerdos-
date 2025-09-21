@@ -15,12 +15,14 @@
   #startScreen, #gameContainer, #endScreen {
     position: absolute; top:0; left:0; width:100%; height:100%;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
-    background: rgba(255,255,255,0.6);
+    background: rgba(255,255,255,0.3);
+    text-align:center;
   }
   #startScreen h1, #endScreen h1 {
     font-size: 2.5em;
     color: darkgreen;
     margin-bottom:20px;
+    text-shadow:1px 1px 3px white;
   }
   button {
     padding:10px 20px;
@@ -30,42 +32,50 @@
     border-radius:10px;
     cursor:pointer;
     background:green; color:white;
+    box-shadow:2px 2px 5px rgba(0,0,0,0.3);
   }
   #hud {
     position:absolute; top:10px; left:10px; right:10px;
     display:flex; justify-content:space-between; align-items:center;
     font-size:1.2em; color:darkgreen; font-weight:bold;
+    text-shadow:1px 1px 2px white;
   }
   #lives span {
     font-size:1.5em;
   }
   #grid {
     display:grid;
-    grid-template-columns: repeat(4,80px);
+    grid-template-columns: repeat(4,100px);
     grid-gap:15px;
     margin-top:100px;
   }
   .cell {
-    width:80px; height:80px;
+    width:100px; height:100px;
     display:flex; align-items:center; justify-content:center;
-    font-size:2em;
     background:white;
     border-radius:15px;
     box-shadow:2px 2px 5px rgba(0,0,0,0.3);
     cursor:pointer;
     transition:transform 0.2s, background 0.2s;
   }
+  .cell img {
+    max-width:80px;
+    max-height:80px;
+    user-select:none;
+    pointer-events:none;
+  }
   .highlight {
     background:yellow;
-    transform:scale(1.1);
+    transform:scale(1.15);
   }
   #gardener {
     position:absolute; bottom:20px; left:20px;
-    width:150px;
+    width:160px;
     text-align:center;
   }
   #gardener img {
     width:100%;
+    max-width:160px;
   }
   #speech {
     background:white; padding:10px;
@@ -122,138 +132,144 @@
 <audio id="sound3" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_2a983a58bd.mp3?filename=pop-110126.mp3"></audio>
 
 <script>
-const icons=["🌸","🌻","🍎","🍐","🍊","🍇","🥕","🍓"];
-let sequence=[]; 
-let playerSequence=[];
-let roundNames = ["Sembrar las flores", "Cosechar las frutas", "Juntar la cosecha"];
-let currentRound=1; 
-let score=0; 
-let lives=3;
-let acceptingInput=false;
-let sequenceCount=0; 
-let musicOn=false;
+const grid = document.getElementById("grid");
+const roundDisplay = document.getElementById("round");
+const scoreDisplay = document.getElementById("score");
+const livesDisplay = document.getElementById("lives");
+const speech = document.getElementById("speech");
+const startScreen = document.getElementById("startScreen");
+const gameContainer = document.getElementById("gameContainer");
+const endScreen = document.getElementById("endScreen");
+const finalScore = document.getElementById("finalScore");
+const startBtn = document.getElementById("startBtn");
+const restartBtn = document.getElementById("restartBtn");
+const musicBtnStart = document.getElementById("musicBtnStart");
+const musicBtnGame = document.getElementById("musicBtnGame");
+const bgMusic = document.getElementById("bgMusic");
+const sounds = [document.getElementById("sound1"), document.getElementById("sound2"), document.getElementById("sound3")];
 
-const startScreen=document.getElementById('startScreen');
-const startBtn=document.getElementById('startBtn');
-const musicBtnStart=document.getElementById('musicBtnStart');
-const gameContainer=document.getElementById('gameContainer');
-const grid=document.getElementById('grid');
-const roundDisp=document.getElementById('round');
-const scoreDisp=document.getElementById('score');
-const livesDisp=document.getElementById('lives');
-const gardenerSpeech=document.getElementById('speech');
-const bgMusic=document.getElementById('bgMusic');
-const musicBtnGame=document.getElementById('musicBtnGame');
-const endScreen=document.getElementById('endScreen');
-const finalScore=document.getElementById('finalScore');
-const restartBtn=document.getElementById('restartBtn');
-const sounds=[
-  document.getElementById('sound1'),
-  document.getElementById('sound2'),
-  document.getElementById('sound3')
+const items = [
+  "https://cdn.pixabay.com/photo/2016/08/05/17/33/apple-1571994_1280.png",
+  "https://cdn.pixabay.com/photo/2014/04/02/10/56/banana-303688_1280.png",
+  "https://cdn.pixabay.com/photo/2017/01/23/19/25/grapes-2002938_1280.png",
+  "https://cdn.pixabay.com/photo/2012/04/12/23/47/carrot-30994_1280.png",
+  "https://cdn.pixabay.com/photo/2014/04/02/16/18/strawberry-307831_1280.png",
+  "https://cdn.pixabay.com/photo/2016/08/05/17/32/orange-1571993_1280.png",
+  "https://cdn.pixabay.com/photo/2016/03/05/22/34/broccoli-1238250_1280.png"
 ];
 
-function updateHUD(){
-  roundDisp.textContent="Ronda "+currentRound+": "+roundNames[currentRound-1];
-  scoreDisp.textContent="Puntos: "+score;
-  livesDisp.textContent="🌼".repeat(lives);
-}
+let sequence = [];
+let playerSequence = [];
+let currentRound = 1;
+let score = 0;
+let lives = 3;
+let acceptingInput = false;
 
-function showSpeech(text, duration=3000){
-  gardenerSpeech.textContent=text;
-  setTimeout(()=>{gardenerSpeech.textContent="";},duration);
-}
-
-function renderElements(){
+// Crear grid
+function createGrid(){
   grid.innerHTML="";
-  icons.forEach((icon,i)=>{
-    const div=document.createElement("div");
-    div.className="cell";
-    div.textContent=icon;
-    div.dataset.index=i;
-    div.addEventListener("click",()=>handleClick(parseInt(div.dataset.index),div));
-    grid.appendChild(div);
+  items.forEach((src, idx)=>{
+    const cell = document.createElement("div");
+    cell.classList.add("cell");
+    cell.dataset.index=idx;
+    const img = document.createElement("img");
+    img.src = src;
+    cell.appendChild(img);
+    cell.addEventListener("click", ()=>handlePlayerInput(idx));
+    grid.appendChild(cell);
   });
 }
 
-function playSound(idx){
-  sounds[idx % sounds.length].currentTime=0;
-  sounds[idx % sounds.length].play();
-}
-
-function generateSequence(len){
-  let seq=[];
-  for(let i=0;i<len;i++){
-    seq.push(Math.floor(Math.random()*icons.length));
-  }
-  return seq;
-}
-
-async function playSequence(seq){
+// Mostrar secuencia
+async function showSequence(){
   acceptingInput=false;
-  for(let i=0;i<seq.length;i++){
-    let cell=grid.querySelector(`[data-index='${seq[i]}']`);
-    cell.classList.add("highlight");
-    playSound(seq[i]);
-    await new Promise(r=>setTimeout(r,800));
-    cell.classList.remove("highlight");
-    await new Promise(r=>setTimeout(r,200));
+  for(let i=0;i<sequence.length;i++){
+    const idx=sequence[i];
+    const cell=grid.querySelector(`[data-index='${idx}']`);
+    await new Promise(res=>{
+      setTimeout(()=>{
+        cell.classList.add("highlight");
+        sounds[i % sounds.length].play();
+        setTimeout(()=>{
+          cell.classList.remove("highlight");
+          res();
+        },600);
+      },600);
+    });
   }
   acceptingInput=true;
-  playerSequence=[];
 }
 
-function handleClick(i,div){
-  if(!acceptingInput)return;
-  playSound(i);
-  playerSequence.push(i);
-  let currentStep=playerSequence.length-1;
-  if(playerSequence[currentStep]!==sequence[currentStep]){
+// Manejar jugada
+function handlePlayerInput(idx){
+  if(!acceptingInput) return;
+  const sound = sounds[Math.floor(Math.random()*sounds.length)];
+  sound.play();
+
+  playerSequence.push(idx);
+  const currentStep = playerSequence.length-1;
+
+  if(playerSequence[currentStep] !== sequence[currentStep]){
     lives--;
     updateHUD();
-    showSpeech("¡Ups! Perdiste una vida.",2000);
-    acceptingInput=false;
-    if(lives<=0){endGame("¡Juego terminado!");return;}
-    else{setTimeout(()=>playSequence(sequence),1500);}
+    playerSequence=[];
+    if(lives<=0) return endGame();
+    showMessage("¡Ups! Pierdes una flor 🌼");
     return;
   }
-  if(playerSequence.length===sequence.length){
-    score+=10;
+
+  if(playerSequence.length === sequence.length){
+    score += sequence.length*10;
     updateHUD();
-    sequenceCount++;
-    acceptingInput=false;
-    if(sequenceCount<2){
-      showSpeech("¡Muy bien! Aquí va otra secuencia.",3000);
-      setTimeout(startRound,3200);
-    } else {
+    playerSequence=[];
+    if(sequence.length>=3+currentRound){ // longitud meta
       currentRound++;
-      sequenceCount=0;
-      if(currentRound>3){
-        endGame("¡Felicidades, completaste el juego!");
-      } else {
-        showSpeech("¡Avanzamos a la siguiente ronda!",4000);
-        setTimeout(startRound,4200);
-      }
+      if(currentRound>3) return endGame();
+      showMessage("¡Bien! Vamos a la siguiente ronda...");
+      setTimeout(startRound,2500);
+    } else {
+      nextTurn();
     }
   }
 }
 
-function startRound(){
-  updateHUD();
-  renderElements();
-  let len=currentRound+2;
-  sequence=generateSequence(len);
-  setTimeout(()=>playSequence(sequence),1500);
-  showSpeech("Ronda "+currentRound+": "+roundNames[currentRound-1],4000);
+// HUD
+function updateHUD(){
+  roundDisplay.textContent=`Ronda: ${currentRound}`;
+  scoreDisplay.textContent=`Puntos: ${score}`;
+  livesDisplay.textContent="🌼".repeat(lives);
 }
 
-function endGame(message){
+// Nueva ronda
+function startRound(){
+  sequence=[];
+  playerSequence=[];
+  if(currentRound===1) showMessage("🌱 Ronda 1: ¡A sembrar las frutas!");
+  if(currentRound===2) showMessage("🍊 Ronda 2: ¡A cosechar las frutas!");
+  if(currentRound===3) showMessage("🥕 Ronda 3: ¡A juntar la cosecha!");
+  nextTurn();
+}
+
+// Añadir un paso más
+function nextTurn(){
+  sequence.push(Math.floor(Math.random()*items.length));
+  showSequence();
+}
+
+// Final del juego
+function endGame(){
   gameContainer.style.display="none";
   endScreen.style.display="flex";
-  finalScore.textContent=message+" Puntaje final: "+score;
+  finalScore.textContent=`Tu puntaje final: ${score}`;
+}
+
+// Mensajes jardinero
+function showMessage(msg){
+  speech.textContent=msg;
 }
 
 // Música
+let musicOn=false;
 async function toggleMusic(){
   if(musicOn){
     bgMusic.pause();
@@ -262,41 +278,29 @@ async function toggleMusic(){
     try {
       await bgMusic.play();
       musicOn=true;
-    } catch(e) {
-      console.log("El navegador bloqueó el audio hasta interacción directa.");
-      musicOn=false;
+    } catch(e){
+      console.log("El navegador bloqueó la música hasta interacción directa.");
     }
   }
   musicBtnStart.textContent=musicOn?'🔇 Música':'🔊 Música';
   musicBtnGame.textContent=musicOn?'🔇 Música':'🔊 Música';
 }
 
-musicBtnStart.onclick=toggleMusic;
-musicBtnGame.onclick=toggleMusic;
-
-startBtn.addEventListener('click', async ()=>{
-  startScreen.style.display='none';
-  gameContainer.style.display='block';
-  currentRound=1;score=0;lives=3;sequenceCount=0;updateHUD();
-  try {
-    await bgMusic.play();
-    musicOn=true;
-    musicBtnStart.textContent='🔇 Música';
-    musicBtnGame.textContent='🔇 Música';
-  } catch(e) {
-    console.log("El navegador requiere que presiones el botón de música manualmente.");
-  }
-  setTimeout(startRound,400);
+// Eventos
+startBtn.addEventListener("click", async ()=>{
+  startScreen.style.display="none";
+  gameContainer.style.display="block";
+  currentRound=1; score=0; lives=3; updateHUD();
+  createGrid();
+  try { await bgMusic.play(); musicOn=true; } catch(e){}
+  setTimeout(startRound,500);
 });
-
 restartBtn.addEventListener("click", ()=>{
   endScreen.style.display="none";
-  gameContainer.style.display="block";
-  currentRound=1;score=0;lives=3;sequenceCount=0;
-  updateHUD();
-  setTimeout(startRound,400);
+  startScreen.style.display="flex";
 });
+musicBtnStart.addEventListener("click", toggleMusic);
+musicBtnGame.addEventListener("click", toggleMusic);
 </script>
-
 </body>
 </html>
