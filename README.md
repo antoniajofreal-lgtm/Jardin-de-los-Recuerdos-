@@ -61,6 +61,11 @@
     color:#173d2a; border-radius:12px; padding:10px; border:1px solid rgba(0,0,0,0.08);
     box-shadow:0 10px 26px rgba(0,0,0,0.12);
     text-align:center;
+    transition: background 0.3s, color 0.3s;
+  }
+  #speechBubble.error {
+    background:#e63946;
+    color:white;
   }
   #gardenerImg { width:110px; display:block; }
 
@@ -121,8 +126,7 @@
 <audio id="bgMusic" loop src="https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Jahzzar/Traveller/Jahzzar_-_05_-_Siesta.mp3"></audio>
 <audio id="sndSeq" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="sndOk"  src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
-<!-- Nuevo sonido de error estable -->
-<audio id="sndErr" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_bdb25f17d7.mp3?filename=error-126627.mp3"></audio>
+<audio id="sndErr" src="https://actions.google.com/sounds/v1/cartoon/metal_thud_and_clang.ogg"></audio>
 
 <script>
 const startScreen = document.getElementById('startScreen');
@@ -148,10 +152,7 @@ const sndSeq = document.getElementById('sndSeq');
 const sndOk = document.getElementById('sndOk');
 const sndErr = document.getElementById('sndErr');
 
-// fallback del jardinero
-gardenerImg.addEventListener('error', ()=> { 
-  gardenerImg.src = "https://cdn.pixabay.com/photo/2017/01/31/17/44/cartoon-2025787_1280.png"; 
-});
+gardenerImg.addEventListener('error', ()=> { gardenerImg.style.display='none'; });
 
 const rounds = [
   { name: "Sembrar las frutas 🌱", pool:['🌸','🌻','🌷','🌼'], cells:4 },
@@ -162,10 +163,16 @@ const rounds = [
 let currentRound=1, sequence=[], playerIndex=0, sequenceCount=0, score=0, lives=3, listening=false, musicOn=false;
 let correctMoves=0, errors=0;
 
-function setBubble(text, ms=3000){
+function setBubble(text, ms=3000, isError=false){
   speechBubble.textContent=text;
+  if(isError){ speechBubble.classList.add('error'); }
   speechBubble.style.display='block';
-  setTimeout(()=>{ if(speechBubble.textContent===text) speechBubble.style.display='none'; },ms);
+  setTimeout(()=>{ 
+    if(speechBubble.textContent===text){
+      speechBubble.style.display='none'; 
+      speechBubble.classList.remove('error'); 
+    }
+  },ms);
 }
 function updateHUD(){
   scoreDisplay.textContent='Puntos: '+score;
@@ -221,7 +228,8 @@ function onCellPressed(idx){
   if(!listening) return;
   if(idx!==sequence[playerIndex]){
     safePlay(sndErr); lives=Math.max(0,lives-1); errors++; updateHUD();
-    setBubble('¡Ups! Esa no es la correcta.',2200); listening=false; playerIndex=0;
+    setBubble('¡Ups! Perdiste una vida 🌸',2500,true); 
+    listening=false; playerIndex=0;
     if(lives<=0){ setTimeout(()=>gameOverLose(),700); }
     else { setTimeout(()=>showSequence(sequence),900); }
     return;
