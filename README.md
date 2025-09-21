@@ -57,17 +57,12 @@
     gap:10px; z-index:1000; pointer-events:none;
   }
   #speechBubble {
-    min-width:200px; max-width:300px; font-size:18px; background: rgba(255,255,255,0.98);
+    min-width:180px; max-width:300px; font-size:18px; background: rgba(255,255,255,0.98);
     color:#173d2a; border-radius:12px; padding:14px; border:2px solid rgba(0,0,0,0.1);
     box-shadow:0 10px 26px rgba(0,0,0,0.12);
     text-align:center;
   }
-  #speechBubble.error {
-    background:#ffdddd;
-    color:#a80000;
-    border:2px solid #a80000;
-    font-weight:bold;
-  }
+  #speechBubble.error { background:#ffdddd; color:#a60000; border-color:#a60000; }
   #gardenerImg { width:110px; display:block; }
 
   .overlay { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:1200; background: rgba(255,255,255,0.95); text-align:center; }
@@ -126,7 +121,7 @@
 
 <audio id="bgMusic" loop src="https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Jahzzar/Traveller/Jahzzar_-_05_-_Siesta.mp3"></audio>
 <audio id="sndSeq" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
-<audio id="sndOk"  src="https://actions.google.com/sounds/v1/cartoon/pop.ogg"></audio>
+<audio id="sndOk"  src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="sndErr" src="https://actions.google.com/sounds/v1/cartoon/metal_thud_and_clang.ogg"></audio>
 
 <script>
@@ -156,19 +151,18 @@ const sndErr = document.getElementById('sndErr');
 gardenerImg.addEventListener('error', ()=> { gardenerImg.src = '🧑‍🌾'; });
 
 const rounds = [
-  { name: "Sembrar las flores 🌱", pool:['🌸','🌻','🌷','🌼'], cells:4 },
+  { name: "Sembrar las frutas 🌱", pool:['🌸','🌻','🌷','🌼'], cells:4 },
   { name: "Cosechar las frutas 🍎", pool:['🍎','🍌','🍐','🍇','🍓','🍊'], cells:6 },
-  { name: "A juntar la cosecha 🧺", pool:['🥕','🌽','🍅','🍆','🥒','🥔','🌶️','🧅'], cells:8 }
+  { name: "A juntar la cosecha 🧺", pool:['🥕','🌽','🍅','🍆','🥒','🥔','🫑','🧅'], cells:8 }
 ];
 
 let currentRound=1, sequence=[], playerIndex=0, sequenceCount=0, score=0, lives=3, listening=false, musicOn=false;
 let correctMoves=0, errors=0;
 
-function setBubble(text, isError=false){
-  const ms = 3000;
+function setBubble(text, ms=3000, isError=false){
   speechBubble.textContent=text;
+  speechBubble.classList.toggle('error', isError);
   speechBubble.style.display='block';
-  speechBubble.classList.toggle("error", isError);
   setTimeout(()=>{ if(speechBubble.textContent===text) speechBubble.style.display='none'; },ms);
 }
 function updateHUD(){
@@ -202,18 +196,18 @@ function generateSequence(len){
   return Array.from({length:len},()=>Math.floor(Math.random()*poolLen));
 }
 async function showSequence(seq){
-  listening=false; setBubble('Observa la secuencia...');
-  await new Promise(r=>setTimeout(r,3000));
+  listening=false; setBubble('Observa la secuencia...',3000);
+  await new Promise(r=>setTimeout(r,2500));
   const cells=[...elementsWrap.querySelectorAll('.cell')];
   for(let idx of seq){
     const cell=cells[idx]; if(cell){ cell.classList.add('active'); safePlay(sndSeq);
     await new Promise(r=>setTimeout(r,700)); cell.classList.remove('active'); await new Promise(r=>setTimeout(r,150)); }
   }
-  listening=true; setBubble('¡Tu turno! Repite la secuencia');
+  listening=true; setBubble('¡Tu turno! Repite la secuencia',3000);
 }
 function startRound(){
   if(currentRound>rounds.length){ gameOverWin(); return; }
-  sequenceCount=0; setBubble('Ronda '+currentRound+': '+rounds[currentRound-1].name);
+  sequenceCount=0; setBubble('Ronda '+currentRound+': '+rounds[currentRound-1].name,3000);
   buildBoard(currentRound); setTimeout(()=> startNewSequence(),900);
 }
 function startNewSequence(){
@@ -225,19 +219,20 @@ function onCellPressed(idx){
   if(!listening) return;
   if(idx!==sequence[playerIndex]){
     safePlay(sndErr); lives=Math.max(0,lives-1); errors++; updateHUD();
-    setBubble('¡Ups! Esa no es la correcta.',true); listening=false; playerIndex=0;
+    setBubble('¡Ups! Esa no es la correcta.',3000,true); listening=false; playerIndex=0;
     if(lives<=0){ setTimeout(()=>gameOverLose(),700); }
     else { setTimeout(()=>showSequence(sequence),900); }
     return;
   }
-  safePlay(sndOk); correctMoves++;
+  safePlay(sndSeq); // 🔔 ahora usa el mismo sonido que mostrar secuencia
+  correctMoves++;
   const cell=[...elementsWrap.querySelectorAll('.cell')][idx];
   if(cell){ cell.classList.add('active'); setTimeout(()=>cell.classList.remove('active'),220); }
   playerIndex++; score+=10; updateHUD();
   if(playerIndex>=sequence.length){
     score+=20; updateHUD(); sequenceCount++; listening=false;
-    if(sequenceCount<2){ setBubble('¡Muy bien! Otra secuencia.'); setTimeout(()=>startNewSequence(),1000);}
-    else { setBubble('¡Ronda completada! 🎉'); currentRound++; setTimeout(()=>startRound(),1500); }
+    if(sequenceCount<2){ setBubble('¡Muy bien! Otra secuencia.',3000); setTimeout(()=>startNewSequence(),1000);}
+    else { setBubble('¡Ronda completada! 🎉',3000); currentRound++; setTimeout(()=>startRound(),1500); }
   }
 }
 function gameOverWin(){
@@ -257,7 +252,7 @@ startBtn.addEventListener('click', startBtnClicked);
 restartBtn.addEventListener('click', ()=>{ winOverlay.style.display='none'; loseOverlay.style.display='none'; startBtnClicked(); });
 winRestart.addEventListener('click', ()=>{ winOverlay.style.display='none'; startBtnClicked(); });
 loseRestart.addEventListener('click', ()=>{ loseOverlay.style.display='none'; startBtnClicked(); });
-updateHUD(); setBubble('¡Hola! Presiona "Comenzar Juego".');
+updateHUD(); setBubble('¡Hola! Presiona "Comenzar Juego".',3000);
 </script>
 </body>
 </html>
